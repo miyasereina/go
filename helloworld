@@ -1,0 +1,59 @@
+package main
+
+import (
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"os"
+	"strconv"
+)
+
+func main() {
+	var i int
+
+	working(i)
+}
+
+func working(i int)  {
+	ch:=make(chan int)
+	for i:=1;i<=13;i++{
+		go per(i,ch)
+		}
+	for i:=1;i<=13;i++{
+		fmt.Printf("第%d页爬取完成\n",<-ch)
+	}
+}
+
+func per(i int,ch chan int) {
+	fmt.Print(i)
+	url := "https://www.bilibili.com/bangumi/play/ep30742"+strconv.Itoa(i)+"?from=search&seid=16190927547791553875"
+	html,err:= get(url)
+	if err != nil {
+		fmt.Print(err)
+		return
+	}
+
+	f,err2:=os.Create("第" + strconv.Itoa(i)+"页" + ".html")
+	if err2!=nil{
+		fmt.Print(err2)
+		return
+		}
+
+	f.WriteString(html)
+	f.Close()
+	ch<-i
+
+}
+
+
+func get(url string) (html string,err error) {
+	resp, err1 := http.Get(url)
+	if err1 != nil {
+		err=err1
+		return
+	}
+	defer resp.Body.Close()
+	Html,_:=ioutil.ReadAll(resp.Body)
+	html=string(Html)
+	return html,err
+}
